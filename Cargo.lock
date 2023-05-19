@@ -45,6 +45,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.71"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -837,11 +843,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "pythia"
+name = "pythia-agent"
+version = "0.1.0"
+
+[[package]]
+name = "pythia-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "uuid",
+]
+
+[[package]]
+name = "pythia-service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
  "duckdb",
+ "pythia-core",
  "uuid",
 ]
 

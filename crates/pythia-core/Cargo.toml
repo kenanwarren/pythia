@@ -1,0 +1,8 @@
+[package]
+name = "pythia-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = "0.4.24"
+uuid = { version = "1.3.3", features = ["v4"] }

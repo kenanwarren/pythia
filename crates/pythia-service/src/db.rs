@@ -1,25 +1,8 @@
-use chrono::{DateTime, Utc};
-use duckdb::arrow::record_batch::RecordBatch;
-use duckdb::arrow::util::pretty::print_batches;
-use duckdb::{params, Connection, Result};
-use uuid::Uuid;
+use anyhow::Error;
+use duckdb::{params, Connection};
+use pythia_core::Event;
 
-#[derive(Debug)]
-struct Event {
-    id: Uuid,
-    r#type: String,
-    level: String,
-    timestamp: DateTime<Utc>,
-    source: String,
-    payload: String,
-    trigger: String,
-    category: String,
-    account_id: Uuid,
-}
-
-fn main() -> Result<()> {
-    let conn = Connection::open_in_memory()?;
-
+pub fn migrate(conn: &Connection) -> Result<(), Error> {
     conn.execute_batch(
         r"
         CREATE TABLE event (
@@ -36,25 +19,22 @@ fn main() -> Result<()> {
         ",
     )?;
 
-    let event = Event {
-        id: Uuid::new_v4(),
-        r#type: String::from("test"),
-        level: String::from("test"),
-        timestamp: chrono::offset::Utc::now(),
-        source: String::from("test"),
-        payload: String::from("test"),
-        trigger: String::from("test"),
-        category: String::from("test"),
-        account_id: Uuid::new_v4(),
-    };
+    Ok(())
+}
+
+pub fn create_event(conn: &Connection, event: Event) -> Result<(), Error> {
     conn.execute(
         "INSERT INTO event (id, type, level, timestamp, source, payload, trigger, category, account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![event.id, event.r#type, event.level, event.timestamp, event.source, event.payload, event.trigger, event.category, event.account_id],
     )?;
 
-    // query table by rows
+    Ok(())
+}
+
+pub fn get_events(conn: &Connection) -> Result<Vec<Event>, Error> {
+    let mut events = Vec::new();
     let mut stmt = conn.prepare("SELECT id, account_id FROM event")?;
-    let events = stmt.query_map([], |row| {
+    let results = stmt.query_map([], |row| {
         Ok(Event {
             id: row.get(0)?,
             r#type: String::from(""),
@@ -68,12 +48,9 @@ fn main() -> Result<()> {
         })
     })?;
 
-    for event in events {
-        println!("Found event {:?}", event.unwrap());
+    for result in results {
+        events.push(result.unwrap());
     }
 
-    // query table by arrow
-    let rbs: Vec<RecordBatch> = stmt.query_arrow([])?.collect();
-    print_batches(&rbs).unwrap();
-    Ok(())
+    Ok(events)
 }
